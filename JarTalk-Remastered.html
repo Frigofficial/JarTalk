@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JarTalk Remastered — Made by Frig</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#071025; --card:#0a1320; --muted:#9aa4b2; --accent:#7c5cff; --accent-2:#31d0aa;
+      --glass: rgba(255,255,255,0.03);
+      --owner-red: #ff6b6b;
+    }
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 10% 10%, rgba(124,92,255,0.12), transparent),
+      radial-gradient(800px 400px at 90% 90%, rgba(49,208,170,0.06), transparent), var(--bg); color:#e6eef8}
+    .app{display:grid;grid-template-columns:1fr 340px;gap:22px;padding:28px;min-height:100vh}
+
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:18px;padding:16px;box-shadow: 0 12px 50px rgba(3,6,23,0.65);border:1px solid rgba(255,255,255,0.03)}
+
+    .left{display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.02), transparent);margin-bottom:14px}
+    .logo{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 8px 28px rgba(124,92,255,0.14),0 0 26px rgba(124,92,255,0.05) inset}
+    .title{font-size:18px;font-weight:800}
+    .subtitle{font-size:12px;color:var(--muted)}
+
+    .user-badge{display:flex;gap:10px;align-items:center}
+    .user-photo{width:36px;height:36px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center}
+    .user-photo img{width:100%;height:100%;object-fit:cover}
+
+    .messages{flex:1;overflow:auto;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
+    .msg{max-width:70%;padding:12px 14px;border-radius:12px;margin-bottom:10px;backdrop-filter: blur(6px);position:relative}
+    .me{margin-left:auto;background:linear-gradient(135deg, rgba(124,92,255,0.14), rgba(49,208,170,0.06));box-shadow: 0 8px 28px rgba(124,92,255,0.06)}
+    .other{background:rgba(255,255,255,0.02)}
+    .meta{font-size:11px;color:var(--muted);margin-bottom:6px}
+
+    .composer{display:flex;gap:10px;margin-top:12px}
+    .input{flex:1;padding:12px 14px;border-radius:14px;border:none;background:var(--glass);color:inherit;outline:none;box-shadow:0 6px 18px rgba(2,6,23,0.6) inset}
+    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 8px 30px rgba(124,92,255,0.12);color:#06111a}
+
+    .users{display:flex;flex-direction:column;gap:12px}
+    .user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid rgba(255,255,255,0.02)}
+    .avatar{width:52px;height:52px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:800;overflow:hidden}
+    .avatar img{width:100%;height:100%;object-fit:cover}
+    .u-meta{flex:1}
+    .status{font-size:12px}
+    .online{color:#7ef0b1}
+    .offline{color:#9aa4b2}
+
+    .centered{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+    .modal{width:560px;padding:18px;border-radius:16px;background:linear-gradient(180deg, rgba(8,12,20,0.95), rgba(6,9,16,0.94));box-shadow:0 22px 80px rgba(2,6,23,0.9);border:1px solid rgba(255,255,255,0.03)}
+    .form-row{display:flex;gap:8px;margin-bottom:10px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input,textarea{width:100%;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.02);color:inherit;outline:none}
+    .small{font-size:12px;color:var(--muted)}
+    .info-link{color:#5cc0ff;cursor:pointer;text-decoration:underline}
+    .auth-confirm{color:var(--owner-red);font-weight:700;margin-top:8px}
+    .owner-badge{font-size:11px;color:var(--owner-red);margin-left:8px;font-weight:700}
+
+    .controls{display:flex;gap:8px;align-items:center}
+    .icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:10px;color:var(--muted);cursor:pointer}
+
+    footer{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+
+    @media (max-width:920px){.app{grid-template-columns:1fr;}.users{order:2}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="left panel">
+      <div class="topbar">
+        <div class="logo">JT</div>
+        <div>
+          <div class="title">JarTalk Remastered <span style="font-weight:400;font-size:12px">— Made by Frig</span></div>
+          <div class="subtitle">Aesthetic chat with presence, images & authorship</div>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <div id="currentUserSmall" class="muted">Not logged</div>
+          <div id="currentUserPhoto" class="user-photo" style="display:none"><img src="" alt="pfp"></div>
+          <button id="loginListBtn" class="icon-btn" title="Log in">Log in</button>
+          <button id="openRegBtn" class="btn">Register</button>
+          <button id="logoutBtn" class="btn" style="display:none">Logout</button>
+        </div>
+      </div>
+
+      <div id="messages" class="messages" aria-live="polite"></div>
+
+      <div id="typingIndicator" class="muted" style="margin-top:8px;height:22px"></div>
+
+      <div class="composer">
+        <input id="messageInput" class="input" placeholder="Type a message..." autocomplete="off" />
+        <button id="sendBtn" class="btn">Send</button>
+      </div>
+    </div>
+
+    <div class="panel users">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-weight:800">Users</div>
+        <div id="userCount" class="muted">0</div>
+      </div>
+      <div id="usersList" style="margin-top:8px;display:flex;flex-direction:column;gap:10px"></div>
+      <div style="margin-top:auto">
+        <footer>Made with ✨ — Replace Firebase config before use.</footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register modal -->
+  <div id="registerModal" class="centered" style="display:none">
+    <div class="modal">
+      <h3 style="margin-top:0">Create your JarTalk profile</h3>
+
+      <div class="form-row">
+        <div style="flex:1">
+          <label>Username (3–15 chars)</label>
+          <input id="inUsername" maxlength="15" />
+        </div>
+        <div style="width:110px">
+          <label>Age (14–45)</label>
+          <input id="inAge" type="number" min="14" max="45" />
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label>Description (max 50)</label>
+        <textarea id="inDesc" rows="2" maxlength="50"></textarea>
+      </div>
+
+      <div class="form-row" style="align-items:center">
+        <div style="flex:1">
+          <label>Password</label>
+          <input id="inPass" type="password" />
+        </div>
+        <div style="width:150px">
+          <label>Profile picture</label>
+          <input id="inFile" type="file" accept="image/*" />
+        </div>
+      </div>
+
+      <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+        <div class="small">Info: <span id="infoText" class="small">Create a profile — it will be remembered in this browser. (max 100 chars)</span> <span style="display:inline-block;margin-left:6px" class="info-link" id="authLink">I am part of the authorship.</span></div>
+        <div>
+          <button id="cancelReg" class="btn" style="background:transparent;color:var(--muted);box-shadow:none;border:1px solid rgba(255,255,255,0.02)">Cancel</button>
+          <button id="previewBtn" class="btn">Continue</button>
+        </div>
+      </div>
+
+      <div id="authPrompt" style="display:none;margin-top:10px">
+        <label>Authorship private code</label>
+        <input id="authCode" />
+        <div id="authConfirm" class="auth-confirm" style="display:none">Authorship confirmed.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- confirm modal -->
+  <div id="confirmModal" class="centered" style="display:none">
+    <div class="modal">
+      <h3>Are you sure the provided info is true?</h3>
+      <div id="confirmPreview" style="margin-top:8px;border-radius:8px;padding:10px;background:rgba(255,255,255,0.02)"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="confirmNo" class="btn" style="background:transparent;color:var(--muted);box-shadow:none;border:1px solid rgba(255,255,255,0.02)">No</button>
+        <button id="confirmYes" class="btn">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login list modal -->
+  <div id="loginModal" class="centered" style="display:none">
+    <div class="modal">
+      <h3>Select profile to login</h3>
+      <div id="loginProfiles" style="display:flex;flex-direction:column;gap:8px;margin-top:10px;max-height:320px;overflow:auto"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="closeLogin" class="btn" style="background:transparent;color:var(--muted);box-shadow:none;border:1px solid rgba(255,255,255,0.02)">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit profile photo modal -->
+  <div id="editPhotoModal" class="centered" style="display:none">
+    <div class="modal">
+      <h3>Change profile picture</h3>
+      <div style="margin-top:8px">
+        <input id="editFile" type="file" accept="image/*" />
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="cancelEditPhoto" class="btn" style="background:transparent;color:var(--muted);box-shadow:none;border:1px solid rgba(255,255,255,0.02)">Cancel</button>
+        <button id="saveEditPhoto" class="btn">Upload</button>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+  import { getDatabase, ref, push, set, onValue, onChildAdded, serverTimestamp, update, onDisconnect, remove, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+  import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js';
+
+  // ======= IMPORTANT: Replace with your Firebase config =======
+  const firebaseConfig = {  	 apiKey: "AIzaSyDAxY6ctOR42dmYgMeEhAwf7YLRqOveh6c",  	 authDomain: "jartalk-299c9.firebaseapp.com",   	databaseURL: "https://jartalk-299c9-default-rtdb.europe-west1.firebasedatabase.app",  	 projectId: "jartalk-299c9",  	 storageBucket: "jartalk-299c9.firebasestorage.app",  	 messagingSenderId: "1015857831998",  	 appId: "1:1015857831998:web:df795651f4b1566505f16f" 	};
+  // ============================================================
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const storage = getStorage(app);
+
+  // UI refs
+  const registerModal = document.getElementById('registerModal');
+  const confirmModal = document.getElementById('confirmModal');
+  const inUsername = document.getElementById('inUsername');
+  const inAge = document.getElementById('inAge');
+  const inDesc = document.getElementById('inDesc');
+  const inPass = document.getElementById('inPass');
+  const inFile = document.getElementById('inFile');
+  const previewBtn = document.getElementById('previewBtn');
+  const cancelReg = document.getElementById('cancelReg');
+  const confirmPreview = document.getElementById('confirmPreview');
+  const confirmYes = document.getElementById('confirmYes');
+  const confirmNo = document.getElementById('confirmNo');
+  const authLink = document.getElementById('authLink');
+  const authPrompt = document.getElementById('authPrompt');
+  const authCode = document.getElementById('authCode');
+  const authConfirm = document.getElementById('authConfirm');
+  const infoText = document.getElementById('infoText');
+
+  const messagesEl = document.getElementById('messages');
+  const sendBtn = document.getElementById('sendBtn');
+  const messageInput = document.getElementById('messageInput');
+  const usersList = document.getElementById('usersList');
+  const userCount = document.getElementById('userCount');
+  const currentUserSmall = document.getElementById('currentUserSmall');
+  const currentUserPhoto = document.getElementById('currentUserPhoto');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const loginListBtn = document.getElementById('loginListBtn');
+  const openRegBtn = document.getElementById('openRegBtn');
+  const typingIndicator = document.getElementById('typingIndicator');
+
+  const loginModal = document.getElementById('loginModal');
+  const loginProfiles = document.getElementById('loginProfiles');
+  const closeLogin = document.getElementById('closeLogin');
+
+  const editPhotoModal = document.getElementById('editPhotoModal');
+  const editFile = document.getElementById('editFile');
+  const cancelEditPhoto = document.getElementById('cancelEditPhoto');
+  const saveEditPhoto = document.getElementById('saveEditPhoto');
+
+  // state
+  let me = null; // {uid, username, age, desc, photoURL, owner}
+  let meRef = null;
+  let typingSetTimeout = null;
+  const AUTHORSHIP_CODE = 'gabilandia';
+
+  // helpers
+  function showRegister(){ registerModal.style.display='flex'; }
+  function hideRegister(){ registerModal.style.display='none'; }
+  function showConfirm(){ confirmModal.style.display='flex'; }
+  function hideConfirm(){ confirmModal.style.display='none'; }
+  function showLogin(){ loginModal.style.display='flex'; }
+  function hideLogin(){ loginModal.style.display='none'; }
+  function showEditPhoto(){ editPhotoModal.style.display='flex'; }
+  function hideEditPhoto(){ editPhotoModal.style.display='none'; }
+
+  function escapeHtml(s){ return String(s||'').replace(/[&<>\"']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+  // --- Password hashing (SHA-256) ---
+  async function hashPassword(password){
+    const enc = new TextEncoder();
+    const data = enc.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+    return hashHex;
+  }
+
+  // --- upload image to Firebase Storage ---
+  async function uploadProfileImage(file, uid){
+    if(!file) return null;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const path = `profile_pics/${uid}_${Date.now()}.${ext}`;
+    const storageReference = sRef(storage, path);
+    const snapshot = await uploadBytes(storageReference, file);
+    const url = await getDownloadURL(snapshot.ref);
+    return url;
+  }
+
+  // --- check username uniqueness (case-insensitive) ---
+  async function usernameExists_ci(name){
+    if(!name) return false;
+    const snapshot = await get(ref(db,'users'));
+    const data = snapshot.val() || {};
+    const lname = name.trim().toLowerCase();
+    return Object.values(data).some(u => (u.username||'').toLowerCase() === lname);
+  }
+
+  // --- messages handling ---
+  const messagesRef = ref(db,'messages');
+  onChildAdded(messagesRef, (snap)=>{
+    const msg = snap.val();
+    appendMessage(msg);
+  });
+
+  function appendMessage(msg){
+    const el = document.createElement('div');
+    el.className='msg '+(me && msg.uid===me.uid? 'me':'other');
+    const meta = `<div class="meta">${escapeHtml(msg.username)} • ${new Date(msg.ts||Date.now()).toLocaleTimeString()}</div>`;
+    const text = `<div>${escapeHtml(msg.text)}</div>`;
+    el.innerHTML = meta + text;
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  messageInput.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+    indicateTyping();
+  });
+
+  async function sendMessage(){
+    const text = messageInput.value.trim(); if(!text || !me) return;
+    const mRef = push(messagesRef);
+    await set(mRef, { uid: me.uid, username: me.username, text, ts: Date.now() });
+    messageInput.value='';
+    await set(ref(db,`typing/${me.uid}`), { val:false, meta: me.username });
+  }
+
+  // --- users list & presence ---
+  const allUsersRef = ref(db,'users');
+  onValue(allUsersRef, (snap)=>{
+    const data = snap.val()||{};
+    usersList.innerHTML='';
+    const entries = Object.entries(data).map(([k,v]) => ({uid:k, ...v}));
+    // owners first, then others, both alphabetically
+    entries.sort((a,b)=>{
+      if((a.owner?1:0) !== (b.owner?1:0)) return (b.owner?1:0) - (a.owner?1:0);
+      return (a.username||'').localeCompare(b.username||'');
+    });
+    userCount.textContent = entries.length;
+    entries.forEach(u=>{
+      const el = document.createElement('div'); el.className='user';
+      const avatar = document.createElement('div'); avatar.className='avatar';
+      if(u.photoURL){ const img = document.createElement('img'); img.src = u.photoURL; avatar.appendChild(img); }
+      else avatar.textContent = (u.username||'U').slice(0,2).toUpperCase();
+      const meta = document.createElement('div'); meta.className='u-meta';
+      const nameLine = document.createElement('div'); nameLine.style.fontWeight='700';
+      if(u.owner){ nameLine.innerHTML = `<span style="color:var(--owner-red)">${escapeHtml(u.username||'User')}</span><span class="owner-badge">Owner</span>`; }
+      else nameLine.textContent = u.username||'User';
+      const desc = document.createElement('div'); desc.className='small muted'; desc.textContent = u.desc||'';
+      meta.appendChild(nameLine); meta.appendChild(desc);
+      const status = document.createElement('div'); status.className = 'status '+(u.online? 'online':'offline'); status.textContent = u.online? 'online':'offline';
+      el.appendChild(avatar); el.appendChild(meta); el.appendChild(status);
+      usersList.appendChild(el);
+    });
+  });
+
+  // --- typing indicator logic ---
+  const typingRef = ref(db,'typing');
+  onValue(typingRef, (snap)=>{
+    const data = snap.val()||{};
+    const typingUsers = Object.keys(data).filter(k=> data[k] && data[k].val && k !== (me && me.uid));
+    if(typingUsers.length===0) typingIndicator.textContent='';
+    else if(typingUsers.length===1){
+      const name = data[typingUsers[0]].meta || 'Someone';
+      typingIndicator.textContent = `${name} is typing...`;
+    } else if(typingUsers.length===2){
+      const a = data[typingUsers[0]].meta || 'Someone';
+      const b = data[typingUsers[1]].meta || 'Someone';
+      typingIndicator.textContent = `${a} & ${b} are typing...`;
+    } else {
+      typingIndicator.textContent = `People are typing...`;
+    }
+  });
+
+  function indicateTyping(){
+    if(!me) return;
+    const tRef = ref(db, `typing/${me.uid}`);
+    set(tRef, { val: true, meta: me.username });
+    if(typingSetTimeout) clearTimeout(typingSetTimeout);
+    typingSetTimeout = setTimeout(()=>{ set(tRef, { val:false, meta: me.username }); }, 1500);
+    onDisconnect(tRef).remove().catch(()=>{});
+  }
+
+  // --- registration flow ---
+  authLink.addEventListener('click', ()=>{ authPrompt.style.display = 'block'; authCode.focus(); });
+  authCode.addEventListener('input', ()=>{
+    if(authCode.value.trim()===AUTHORSHIP_CODE){ authConfirm.style.display='block'; }
+    else authConfirm.style.display='none';
+  });
+
+  previewBtn.addEventListener('click', async ()=>{
+    const u = inUsername.value.trim();
+    const a = parseInt(inAge.value);
+    const d = inDesc.value.trim();
+    const pw = inPass.value;
+    if(!u || !pw || Number.isNaN(a)){ alert('Please fill username, age and password'); return; }
+    if(u.length < 3 || u.length > 15){ alert('Username must be 3–15 characters'); return; }
+    if(d.length > 50){ alert('Description max 50 chars'); return; }
+    if(a < 14 || a > 45){ alert('Age must be between 14 and 45'); return; }
+    // unique username check case-insensitive
+    const exists = await usernameExists_ci(u);
+    if(exists){ alert('Username already exists (case-insensitive). Choose another.'); return; }
+    const previewHtml = `<strong>${escapeHtml(u)}</strong> — Age: <em>${a}</em><div style="margin-top:8px;color:var(--muted)">${escapeHtml(d)}</div>`;
+    confirmPreview.innerHTML = previewHtml;
+    hideRegister(); showConfirm();
+  });
+
+  cancelReg.addEventListener('click', ()=>{ hideRegister(); });
+
+  confirmNo.addEventListener('click', ()=>{ hideConfirm(); showRegister(); });
+
+  confirmYes.addEventListener('click', async ()=>{
+    hideConfirm();
+    const username = inUsername.value.trim();
+    const age = parseInt(inAge.value);
+    const desc = inDesc.value.trim();
+    const password = inPass.value;
+    const file = inFile.files[0] || null;
+    // create user in realtime db
+    const usersRef = ref(db,'users');
+    const newUserRef = push(usersRef);
+    const uid = newUserRef.key;
+    const passHash = await hashPassword(password);
+    // upload photo if present
+    let photoURL = null;
+    if(file){
+      try{ photoURL = await uploadProfileImage(file, uid); }
+      catch(e){ console.warn('Upload failed', e); }
+    }
+    const ownerFlag = (authConfirm.style.display !== 'none'); // authorship confirmed
+    const userObj = { username, age, desc, online:true, lastSeen: Date.now(), passHash, photoURL: photoURL || null, owner: !!ownerFlag };
+    await set(newUserRef, userObj);
+    // onDisconnect offline
+    onDisconnect(newUserRef).update({ online:false, lastSeen: Date.now() }).catch(()=>{});
+    // store session locally
+    localStorage.setItem('chat_uid', uid);
+    localStorage.setItem('chat_username', username);
+    // cleanup auth confirm for next time
+    authConfirm.style.display='none';
+    authCode.value='';
+    // reset fields
+    inUsername.value=''; inAge.value=''; inDesc.value=''; inPass.value=''; inFile.value='';
+    // set current user
+    me = { uid, username, age, desc, photoURL, owner: ownerFlag };
+    meRef = ref(db, `users/${uid}`);
+    setupAfterLogin();
+    hideConfirm();
+  });
+
+  // --- auto-login on load ---
+  async function tryAutoLogin(){
+    const savedUid = localStorage.getItem('chat_uid');
+    if(!savedUid){ showRegister(); return; }
+    const userSnapshot = await get(ref(db, `users/${savedUid}`));
+    if(!userSnapshot.exists()){ localStorage.removeItem('chat_uid'); localStorage.removeItem('chat_username'); showRegister(); return; }
+    const data = userSnapshot.val();
+    me = { uid: savedUid, username: data.username, age: data.age, desc: data.desc, photoURL: data.photoURL || null, owner: data.owner || false };
+    meRef = ref(db, `users/${savedUid}`);
+    update(meRef, { online:true }).catch(()=>{});
+    onDisconnect(meRef).update({ online:false, lastSeen: Date.now() }).catch(()=>{});
+    setupAfterLogin();
+  }
+
+  function setupAfterLogin(){
+    currentUserSmall.textContent = me.username;
+    if(me.photoURL){ currentUserPhoto.style.display='inline-flex'; currentUserPhoto.querySelector('img').src = me.photoURL; } else { currentUserPhoto.style.display='none'; }
+    logoutBtn.style.display='inline-block';
+    document.getElementById('registerModal').style.display='none';
+    document.getElementById('confirmModal').style.display='none';
+    // add edit photo button next to name
+    addEditPhotoButton();
+    // update lastSeen periodically
+    setInterval(()=>{ if(meRef) update(meRef, { lastSeen: Date.now() }).catch(()=>{}); }, 30_000);
+  }
+
+  function addEditPhotoButton(){
+    // add small pencil button if not exists
+    if(document.getElementById('editPhotoBtn')) return;
+    const btn = document.createElement('button'); btn.id='editPhotoBtn'; btn.className='icon-btn'; btn.title='Edit profile photo';
+    btn.innerHTML = '✎';
+    btn.style.marginLeft = '6px';
+    btn.addEventListener('click', ()=>{ showEditPhoto(); });
+    currentUserSmall.parentElement.appendChild(btn);
+  }
+
+  logoutBtn.addEventListener('click', async ()=>{
+    if(!meRef) return;
+    await update(meRef, { online:false, lastSeen: Date.now() });
+    await remove(ref(db, `typing/${me.uid}`)).catch(()=>{});
+    localStorage.removeItem('chat_uid'); localStorage.removeItem('chat_username');
+    me = null; meRef = null;
+    logoutBtn.style.display='none'; currentUserSmall.textContent='Not logged'; currentUserPhoto.style.display='none';
+    // show login modal (user should use Log-in)
+    showLogin();
+  });
+
+  // --- Login list & password-only login ---
+  loginListBtn.addEventListener('click', async ()=>{
+    await populateLoginList();
+    showLogin();
+  });
+  closeLogin.addEventListener('click', ()=>{ hideLogin(); });
+
+  async function populateLoginList(){
+    loginProfiles.innerHTML = '';
+    const snapshot = await get(ref(db,'users'));
+    const data = snapshot.val()||{};
+    const entries = Object.entries(data).map(([k,v]) => ({uid:k,...v}));
+    // sort same as users list (owners first)
+    entries.sort((a,b)=>{
+      if((a.owner?1:0) !== (b.owner?1:0)) return (b.owner?1:0) - (a.owner?1:0);
+      return (a.username||'').localeCompare(b.username||'');
+    });
+    entries.forEach(u=>{
+      const row = document.createElement('div');
+      row.style.display='flex'; row.style.alignItems='center'; row.style.justifyContent='space-between'; row.style.gap='8px';
+      row.style.padding='6px'; row.style.borderRadius='8px'; row.style.background='linear-gradient(90deg, rgba(255,255,255,0.01), transparent)';
+      const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+      const av = document.createElement('div'); av.style.width='44px'; av.style.height='44px'; av.style.borderRadius='8px'; av.style.overflow='hidden';
+      if(u.photoURL){ const img = document.createElement('img'); img.src = u.photoURL; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover'; av.appendChild(img); }
+      else av.textContent = (u.username||'U').slice(0,2).toUpperCase();
+      const meta = document.createElement('div');
+      const nameLine = document.createElement('div'); nameLine.style.fontWeight='700';
+      nameLine.textContent = u.username || 'User';
+      if(u.owner){ nameLine.innerHTML = `<span style="color:var(--owner-red)">${escapeHtml(u.username)}</span> <span class="owner-badge">Owner</span>`; }
+      const desc = document.createElement('div'); desc.className='small muted'; desc.textContent = u.desc || '';
+      meta.appendChild(nameLine); meta.appendChild(desc);
+      left.appendChild(av); left.appendChild(meta);
+      const right = document.createElement('div'); right.style.display='flex'; right.style.alignItems='center'; right.style.gap='6px';
+      const passInput = document.createElement('input'); passInput.type='password'; passInput.placeholder='Password'; passInput.style.padding='6px'; passInput.style.borderRadius='8px'; passInput.style.border='none'; passInput.style.background='rgba(255,255,255,0.02)';
+      const btn = document.createElement('button'); btn.className='btn'; btn.textContent='Login';
+      btn.addEventListener('click', async ()=>{
+        const pw = passInput.value||'';
+        if(!pw){ alert('Enter password'); return; }
+        const pwHash = await hashPassword(pw);
+        // fetch user data (u)
+        const snap = await get(ref(db, `users/${u.uid}`));
+        if(!snap.exists()){ alert('Profile not found'); return; }
+        const userData = snap.val();
+        if(userData.passHash === pwHash){
+          // login success
+          me = { uid: u.uid, username: userData.username, age: userData.age, desc: userData.desc, photoURL: userData.photoURL || null, owner: userData.owner || false };
+          meRef = ref(db, `users/${u.uid}`);
+          await update(meRef, { online:true }).catch(()=>{});
+          onDisconnect(meRef).update({ online:false, lastSeen: Date.now() }).catch(()=>{});
+          localStorage.setItem('chat_uid', u.uid);
+          localStorage.setItem('chat_username', userData.username);
+          hideLogin();
+          setupAfterLogin();
+        } else {
+          alert('Wrong password');
+        }
+      });
+      right.appendChild(passInput); right.appendChild(btn);
+      row.appendChild(left); row.appendChild(right);
+      loginProfiles.appendChild(row);
+    });
+  }
+
+  // --- edit photo handlers ---
+  cancelEditPhoto.addEventListener('click', ()=>{ hideEditPhoto(); editFile.value=''; });
+  saveEditPhoto.addEventListener('click', async ()=>{
+    const file = editFile.files[0];
+    if(!me || !file){ alert('Select an image'); return; }
+    const url = await uploadProfileImage(file, me.uid);
+    if(url){
+      await update(ref(db, `users/${me.uid}`), { photoURL: url }).catch(()=>{});
+      me.photoURL = url;
+      currentUserPhoto.style.display='inline-flex'; currentUserPhoto.querySelector('img').src = url;
+      hideEditPhoto();
+      editFile.value='';
+    }
+  });
+
+  // --- start ---
+  window.addEventListener('load', ()=>{ tryAutoLogin(); });
+
+  // small helpers: open register on button clicks
+  openRegBtn.addEventListener('click', ()=>{ showRegister(); });
+  // show login if user logs out (handled above)
+</script>
+</body>
+</html>

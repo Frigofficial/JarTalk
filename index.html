@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>JarTalk Remastered — Fixed</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#081910; --card:#0b1f18; --muted:#9fb7a8; --accent:#2aa876; --accent-2:#1f6f4f; --glass: rgba(255,255,255,0.02); --owner-red:#ff4b5c; }
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    html,body{height:100%;margin:0;background:radial-gradient(900px 400px at 10% 10%, rgba(42,168,118,0.06), transparent),radial-gradient(700px 300px at 90% 90%, rgba(31,111,79,0.04), transparent),var(--bg); color:#dff8ef}
+    .app{display:grid;grid-template-columns:1fr 360px;gap:18px;padding:22px;min-height:100vh}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005)); border-radius:16px;padding:14px;box-shadow: 0 12px 50px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.02)}
+    .left{display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.01), transparent);margin-bottom:12px}
+    .logo{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 6px 28px rgba(0,0,0,0.4) inset}
+    .title{font-size:18px;font-weight:800}
+    .subtitle{font-size:12px;color:var(--muted)}
+    .user-badge{display:flex;gap:10px;align-items:center}
+    .user-photo{width:40px;height:40px;border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center}
+    .user-photo img{width:100%;height:100%;object-fit:cover}
+    .messages{
+  max-height: 500px;
+  overflow-y: auto;flex:1;overflow:auto;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.01)}
+    .msg-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+    .msg-row.me{justify-content:flex-end}
+    .msg-avatar{width:44px;height:44px;border-radius:10px;overflow:hidden;flex-shrink:0}
+    .msg-bubble{max-width:70%;padding:10px 12px;border-radius:12px;backdrop-filter: blur(6px);position:relative}
+    .msg-bubble.me{background:linear-gradient(135deg, rgba(42,168,118,0.12), rgba(31,111,79,0.06));box-shadow:0 6px 16px rgba(0,0,0,0.4)}
+    .msg-bubble.other{background:rgba(255,255,255,0.02)}
+    .msg-meta{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+    .owner-name{color:var(--owner-red);font-weight:800}
+    .composer{display:flex;gap:10px;margin-top:12px;align-items:center}
+    .input{flex:1;padding:12px 14px;border-radius:14px;border:none;background:var(--glass);color:inherit;outline:none;box-shadow:inset 0 6px 16px rgba(0,0,0,0.4)}
+    .btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 8px 30px rgba(0,0,0,0.2);color:#04160f}
+    .file-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    .small-muted{font-size:12px;color:var(--muted)}
+    .users{display:flex;flex-direction:column;gap:12px}
+    .user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid rgba(255,255,255,0.02)}
+    .avatar{width:60px;height:60px;border-radius:12px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:900;overflow:hidden}
+    .u-meta{flex:1}
+    .status{font-size:12px}
+    .online{color:#b6f6d6}
+    .offline{color:#94b7a4}
+    .owner-tag{font-size:11px;color:var(--owner-red);margin-left:6px;font-weight:800}
+    .centered{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;backdrop-filter: blur(6px)}
+    .modal{width:600px;padding:16px;border-radius:14px;background:linear-gradient(180deg, rgba(4,10,6,0.95), rgba(5,12,7,0.96));box-shadow:0 22px 80px rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.02)}
+    .form-row{display:flex;gap:8px;margin-bottom:10px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input,textarea,select{width:100%;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.02);color:inherit;outline:none}
+    .info-blue{color:#6fd0ff;cursor:pointer;text-decoration:underline}
+    .auth-confirm{color:var(--owner-red);font-weight:800;margin-top:8px}
+    .owner-controls{display:flex;gap:8px}
+    .tiny{font-size:12px;color:var(--muted)}
+    footer{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+    .dm-window{position:fixed;right:20px;bottom:20px;width:320px;height:420px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:8px;box-shadow:0 12px 36px rgba(0,0,0,0.6);display:flex;flex-direction:column}
+    .dm-header{display:flex;align-items:center;gap:8px;padding:6px}
+    .dm-messages{flex:1;overflow:auto;padding:6px}
+    .dm-input{display:flex;gap:8px;padding-top:6px}
+    @media (max-width:980px){.app{grid-template-columns:1fr;}.users{order:2}}
+  
+button, .btn, .login-button, .mute-button, .ban-button, .warn-button, .delete-button, .clear-chat-button, .delete-profile-button, .edit-button {
+  background-color: #2aa876 !important;
+  border: none;
+  color: white !important;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+button:hover, .btn:hover {
+  background-color: #249468 !important;
+}
+</style>
+</head>
+<body style="display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="max-width:1200px;width:100%;background:rgba(0,0,0,0.3);padding:20px;border-radius:12px;">
+  <div class="app">
+    <div class="left panel">
+      <div class="topbar">
+        <div class="logo">JT</div>
+        <div>
+          <div class="title">JarTalk Remastered <span style="font-weight:400;font-size:12px">— Made by Frig</span></div>
+          <div class="subtitle">Aesthetic chat — realtime, avatars, authority</div>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <div id="currentUserSmall" class="tiny">Not logged</div>
+          <div id="currentUserPhoto" class="user-photo" style="display:none"><img src="" alt="pfp"></div>
+          <button id="loginListBtn" class="file-btn" title="Log in">Log in</button>
+          <button id="openRegBtn" class="btn">Register</button>
+          <button id="logoutBtn" class="btn" style="display:none">Logout</button>
+        </div>
+      </div>
+
+      <div id="messages" class="messages" aria-live="polite"></div>
+
+      <div id="typingIndicator" class="tiny" style="margin-top:8px;height:22px"></div>
+
+      <div class="composer">
+        <input id="messageInput" class="input" placeholder="Type a message..." autocomplete="off" />
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div id="cooldownText" class="tiny" style="height:16px"></div>
+          <button id="sendBtn" class="btn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel users">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-weight:800">Users</div>
+        <div id="userCount" class="tiny">0</div>
+      </div>
+      <div id="usersList" style="margin-top:8px;display:flex;flex-direction:column;gap:8px"></div>
+
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <button id="clearAllBtn" class="file-btn" title="Clear chat (owner only)">Clear chat</button>
+        <button id="deleteMyProfileBtn" class="file-btn" title="Delete my profile">Delete Profile</button>
+      </div>
+
+      <div style="margin-top:auto">
+        <footer>Made with ✨ — Firebase: jartalk-299c9</footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register modal -->
+  <div id="registerModal" class="centered" style="display:none">
+    <div class="modal">
+      <h3 style="margin-top:0">Create your JarTalk profile</h3>
+      <div class="form-row">
+        <div style="flex:1">
+          <label>Username (3–15 chars)</label>
+          <input id="inUsername" maxlength="15" />
+        </div>
+        <div style="width:120px">
+          <label>Age (14–45)</label>
+          <input id="inAge" type="number" min="14" max="45" />
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label>Description (max 50)</label>
+        <textarea id="inDesc" rows="2" maxlength="50"></textarea>
+      </div>
+
+      <div class="form-row" style="align-items:center">
+        <div style="flex:1">
+          <label>Password</label>
+          <div style="display:flex;gap:8px">
+            <input id="inPass" type="password" />
+            <button id="toggleShowPass" class="file-btn">Show</button>
+          </div>
+        </div>
+        <div style="width:180px">
+          <label>Profile picture</label>
+          <label class="file-btn" id="fakeFileBtn">Choose file<input id="inFile" type="file" accept="image/*" style="display:none"></label>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+        <div class="tiny">Info: <span id="openInfo" class="info-blue">show info</span></div>
+        <div>
+          <button id="cancelReg" class="btn" style="background:transparent;color:var(--muted);box-shadow:none;border:1px solid rgba(255,255,255,0.02)">Cancel</button>
+          <button id="previewBtn" class="btn">Continue</button>
+        </div>
+      </div>
+
+      <div id="infoBox" style="display:none;margin-top:10px;border-radius:10px;padding:10px;background:rgba(255,255,255,0.01)">
+        <div class="tiny">JarTalk stores minimal profile data (username, age, description, avatar). Passwords are stored as SHA-256 hashes. You can create up to <strong>2</strong> profiles from this browser. Owner accounts get special powers. <span style="color:#6fd0ff">I am part of the authorship.</span></div>
+        <div style="margin-top:8px">
+          <button id="openAuthBtn" class="file-btn">Create authority profile</button>
+        </div>
+      </div>
+
+      <div id="authBlock" style="display:none;margin-top:10px">
+        <label>Authorship private code</label>
+        <input id="authCode" />
+        <div id="authConfirm" class="auth-confirm" style="display:none">Authorship confirmed.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- confirm modal -->
+  <div id="confirmModal" class="centered" style="display:none">
+    <div class="modal">
+      <h3>Are you sure the provided info is true?</h3>
+      <div id="confirmPreview" style="margin-top:8px;border-radius:8px;padding:10px;background:rgba(255,255,255,0.02)"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="confirmNo" class="btn" style="background:transparent;color:var(--muted);box-shadow:none;border:1px solid rgba(255,255,255,0.02)">No</button>
+        <button id="confirmYes" class="btn">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- login modal -->
+  <div id="loginModal" class="centered" style="display:none">
+    <div class="modal">
+      <h3>Select profile to login</h3>
+      <div id="loginProfiles" style="display:flex;flex-direction:column;gap:8px;margin-top:10px;max-height:320px;overflow:auto"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="closeLogin" class="btn" style="background:transparent;color:var(--muted);box-shadow:none;border:1px solid rgba(255,255,255,0.02)">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- dm window template (hidden) -->
+  <div id="dmTemplate" style="display:none">
+    <div class="dm-window" data-room="">
+      <div class="dm-header">
+        <div class="msg-avatar"><img src="" style="width:40px;height:40px;object-fit:cover"></div>
+        <div><div class="tiny dm-name"></div><div class="tiny dm-sub muted"></div></div>
+        <div style="margin-left:auto"><button class="file-btn dm-close">Close</button></div>
+      </div>
+      <div class="dm-messages"></div>
+      <div class="dm-input">
+        <input class="dm-input-field" placeholder="Message..." style="flex:1;border-radius:8px;padding:8px;background:rgba(255,255,255,0.02);border:none">
+        <button class="btn dm-send">Send</button>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  // Firebase SDK imports (modular)
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+  import { getDatabase, ref, push, set, onChildAdded, onValue, update, remove, get, child, onDisconnect } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+  import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js';
+
+  // ===== YOUR FIREBASE CONFIG (you provided) =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyDAxY6ctOR42dmYgMeEhAwf7YLRqOveh6c",
+    authDomain: "jartalk-299c9.firebaseapp.com",
+    databaseURL: "https://jartalk-299c9-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "jartalk-299c9",
+    storageBucket: "jartalk-299c9.firebasestorage.app",
+    messagingSenderId: "1015857831998",
+    appId: "1:1015857831998:web:df795651f4b1566505f16f"
+  };
+  // ===============================================
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const storage = getStorage(app);
+
+  // UI elements
+  const registerModal = document.getElementById('registerModal');
+  const loginModal = document.getElementById('loginModal');
+  const inUsername = document.getElementById('inUsername');
+  const inAge = document.getElementById('inAge');
+  const inDesc = document.getElementById('inDesc');
+  const inPass = document.getElementById('inPass');
+  const inFile = document.getElementById('inFile');
+  const fakeFileBtn = document.getElementById('fakeFileBtn');
+  const previewBtn = document.getElementById('previewBtn');
+  const cancelReg = document.getElementById('cancelReg');
+  const confirmModal = document.getElementById('confirmModal');
+  const confirmPreview = document.getElementById('confirmPreview');
+  const confirmYes = document.getElementById('confirmYes');
+  const confirmNo = document.getElementById('confirmNo');
+  const openRegBtn = document.getElementById('openRegBtn');
+  const loginListBtn = document.getElementById('loginListBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const openInfo = document.getElementById('openInfo');
+  const infoBox = document.getElementById('infoBox');
+  const openAuthBtn = document.getElementById('openAuthBtn');
+  const authBlock = document.getElementById('authBlock');
+  const authCode = document.getElementById('authCode');
+  const authConfirm = document.getElementById('authConfirm');
+  const currentUserSmall = document.getElementById('currentUserSmall');
+  const currentUserPhoto = document.getElementById('currentUserPhoto');
+  const usersList = document.getElementById('usersList');
+  const messagesEl = document.getElementById('messages');
+  const sendBtn = document.getElementById('sendBtn');
+  const messageInput = document.getElementById('messageInput');
+  const typingIndicator = document.getElementById('typingIndicator');
+  const cooldownText = document.getElementById('cooldownText');
+  const loginProfiles = document.getElementById('loginProfiles');
+  const closeLogin = document.getElementById('closeLogin');
+  const toggleShowPass = document.getElementById('toggleShowPass');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const deleteMyProfileBtn = document.getElementById('deleteMyProfileBtn');
+  const dmTemplate = document.getElementById('dmTemplate');
+  const userCount = document.getElementById('userCount');
+
+  // state
+  let me = null; // {uid, username, age, desc, photoURL, owner, banned, muted}
+  let meRef = null;
+  const AUTHORSHIP_CODE = 'gabilandia';
+  let cooldown = false;
+  const COOLDOWN_MS = 2000;
+
+  // helpers
+  function show(el){ el.style.display = 'flex'; }
+  function hide(el){ el.style.display = 'none'; }
+  function esc(s){ return String(s||'').replace(/[&<>\"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":"&#39;"}[c])); }
+
+  // --- password hashing (SHA-256) ---
+  async function hashPassword(password){
+    const enc = new TextEncoder();
+    const data = enc.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // --- upload profile image ---
+  async function uploadProfileImage(file, uid){
+    if(!file) return null;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const path = `profile_pics/${uid}_${Date.now()}.${ext}`;
+    const storageRef = sRef(storage, path);
+    const snap = await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(snap.ref);
+    return url;
+  }
+
+  // --- username uniqueness (case-insensitive) ---
+  async function usernameExists_ci(name){
+    if(!name) return false;
+    const snap = await get(ref(db, 'users'));
+    const data = snap.val() || {};
+    const lname = name.trim().toLowerCase();
+    return Object.values(data).some(u => (u.username||'').toLowerCase() === lname);
+  }
+
+  // --- render users helper (used by periodic poll and realtime listener) ---
+  function renderUsers(data){
+    usersList.innerHTML = '';
+    const entries = Object.entries(data||{}).map(([uid,u]) => ({uid, ...u}));
+    entries.sort((a,b)=>{ if((a.owner?1:0) !== (b.owner?1:0)) return (b.owner?1:0) - (a.owner?1:0); return (a.username||'').localeCompare(b.username||''); });
+    userCount.textContent = entries.length;
+    for(const u of entries){
+      const el = document.createElement('div'); el.className='user';
+      const av = document.createElement('div'); av.className='avatar';
+      if(u.photoURL){ const i = document.createElement('img'); i.src = u.photoURL; i.style.width='100%'; i.style.height='100%'; i.style.objectFit='cover'; av.appendChild(i); }
+      else av.textContent = (u.username||'U').slice(0,2).toUpperCase();
+      const meta = document.createElement('div'); meta.className='u-meta';
+      const nameLine = document.createElement('div'); nameLine.style.fontWeight='800';
+      if(u.owner) nameLine.innerHTML = `<span style="color:var(--owner-red)">${esc(u.username||'User')}</span><span class="owner-tag">Owner</span>`;
+      else nameLine.textContent = u.username || 'User';
+      const desc = document.createElement('div'); desc.className='tiny'; desc.textContent = u.desc || '';
+      meta.appendChild(nameLine); meta.appendChild(desc);
+      const right = document.createElement('div');
+      const status = document.createElement('div'); status.className = 'status ' + (u.online? 'online' : 'offline'); status.textContent = u.online? 'online':'offline';
+      right.appendChild(status);
+      if(me && me.owner){
+        const controls = document.createElement('div'); controls.className='owner-controls';
+        const muteBtn = document.createElement('button'); muteBtn.className='file-btn'; muteBtn.textContent = u.muted? 'Unmute':'Mute';
+        muteBtn.addEventListener('click', async ()=>{ await update(ref(db, `users/${u.uid}`), { muted: !u.muted }).catch(()=>{}); });
+        const banBtn = document.createElement('button'); banBtn.className='file-btn'; banBtn.textContent = u.banned? 'Unban':'Ban';
+        banBtn.addEventListener('click', async ()=>{ if(confirm((u.banned? 'Unban this user?' : 'Ban this user?'))){ await update(ref(db, `users/${u.uid}`), { banned: !u.banned }).catch(()=>{}); await set(ref(db, `users/${u.uid}/warning`), { text: u.banned? '' : 'You have been banned by authority', ts: Date.now() }).catch(()=>{}); } });
+        const warnBtn = document.createElement('button'); warnBtn.className='file-btn'; warnBtn.textContent='Warn';
+        warnBtn.addEventListener('click', async ()=>{ const w = prompt('Enter warning message (it will appear to the user):','Please follow the rules'); if(w) await set(ref(db, `users/${u.uid}/warning`), { text: w, ts: Date.now() }).catch(()=>{}); });
+        const delBtn = document.createElement('button'); delBtn.className='file-btn'; delBtn.textContent='Delete';
+        delBtn.addEventListener('click', async ()=>{ if(confirm('Delete this profile? This cannot be undone.')){ await remove(ref(db, `users/${u.uid}`)).catch(()=>{}); } });
+        const dmBtn = document.createElement('button'); dmBtn.className='file-btn'; dmBtn.textContent='DM'; dmBtn.addEventListener('click', ()=>{ openDM(u.uid); });
+        controls.appendChild(muteBtn); controls.appendChild(banBtn); controls.appendChild(warnBtn); controls.appendChild(delBtn); controls.appendChild(dmBtn);
+        right.appendChild(controls);
+      } else {
+        const dmBtn = document.createElement('button'); dmBtn.className='file-btn'; dmBtn.textContent='DM'; dmBtn.addEventListener('click', ()=>{ openDM(u.uid); }); right.appendChild(dmBtn);
+      }
+      el.appendChild(av); el.appendChild(meta); el.appendChild(right); usersList.appendChild(el);
+    }
+  }
+
+  // --- messages stream & append ---
+  const messagesRef = ref(db, 'messages');
+  onChildAdded(messagesRef, (s)=>{
+    const m = s.val();
+    appendMessage(s.key, m);
+    // notify others (but only if we are logged in and message is not from me)
+    if(me && m && m.uid !== me.uid){ notifyAll(`${m.username}: ${String(m.text||'').substring(0,80)}`); }
+  });
+
+  function appendMessage(id, msg){
+    try{
+      const row = document.createElement('div'); row.className = 'msg-row';
+      const isMe = me && msg && msg.uid === me.uid;
+      if(isMe) row.classList.add('me');
+
+      const avatar = document.createElement('div'); avatar.className = 'msg-avatar';
+      const img = document.createElement('img'); img.style.width = '44px'; img.style.height = '44px'; img.style.objectFit = 'cover';
+      if(msg && msg.photoURL){ img.src = msg.photoURL; avatar.appendChild(img); } else { avatar.textContent = (msg && msg.username? (msg.username).slice(0,2).toUpperCase() : 'U'); }
+
+      const bubble = document.createElement('div'); bubble.className = 'msg-bubble ' + (isMe? 'me':'other');
+      const meta = document.createElement('div'); meta.className = 'msg-meta';
+      const nameSpan = document.createElement('span');
+      if(msg && msg.owner) { nameSpan.className = 'owner-name'; nameSpan.textContent = (msg.username||'') + ' (Owner)'; }
+      else nameSpan.textContent = msg? (msg.username||'') : '';
+      const timeSpan = document.createElement('span'); timeSpan.className='tiny muted'; timeSpan.style.marginLeft='6px';
+      timeSpan.textContent = new Date((msg && msg.ts) || Date.now()).toLocaleTimeString();
+      meta.appendChild(nameSpan); meta.appendChild(timeSpan);
+
+      // owner controls in message bubble (if current viewer is owner)
+      if(me && me.owner){
+        const controls = document.createElement('span'); controls.style.marginLeft = '8px';
+        const del = document.createElement('button'); del.className='file-btn'; del.textContent='Delete'; del.style.fontSize='12px';
+        del.addEventListener('click', async ()=>{ if(confirm('Delete this message?')){ await remove(ref(db, `messages/${id}`)).catch(()=>{}); } });
+        controls.appendChild(del); meta.appendChild(controls);
+      }
+
+      const text = document.createElement('div'); text.innerHTML = esc(msg? msg.text : '');
+      bubble.appendChild(meta); bubble.appendChild(text);
+
+      row.appendChild(avatar); row.appendChild(bubble);
+      messagesEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }catch(err){ console.error('appendMessage error', err); }
+  }
+
+  // send message with cooldown and notifications
+  sendBtn.addEventListener('click', sendMessage);
+  messageInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } indicateTyping(); });
+
+  async function sendMessage(){
+    try{
+      if(!me){ alert('Log in first'); return; }
+      if(me.banned){ alert('You are banned.'); return; }
+      if(cooldown && !me.owner){ alert('Please wait for cooldown'); return; }
+      if(me.muted){ alert('You are muted.'); return; }
+      const text = messageInput.value.trim(); if(!text) return;
+      const mref = push(messagesRef);
+      const payload = { uid: me.uid, username: me.username, text, ts: Date.now(), photoURL: me.photoURL || null, owner: !!me.owner };
+      await set(mref, payload);
+      messageInput.value = '';
+      await set(ref(db, `typing/${me.uid}`), { val:false, meta: me.username }).catch(()=>{});
+      if(!me.owner){ cooldown = true; let remaining = COOLDOWN_MS; cooldownText.textContent = `Cooldown... ${Math.ceil(remaining/1000)}s`; const interval = setInterval(()=>{ remaining -= 500; if(remaining <= 0){ clearInterval(interval); cooldown=false; cooldownText.textContent=''; } else cooldownText.textContent = `Cooldown... ${Math.ceil(remaining/1000)}s`; }, 500); } else { cooldownText.textContent = ''; }
+    }catch(err){ console.error('sendMessage error', err); alert('Send failed'); }
+  }
+
+  // typing indicator
+  let typingTimeout = null;
+  function indicateTyping(){ if(!me) return; set(ref(db, `typing/${me.uid}`), { val:true, meta: me.username }).catch(()=>{}); if(typingTimeout) clearTimeout(typingTimeout); typingTimeout = setTimeout(()=>{ set(ref(db, `typing/${me.uid}`), { val:false, meta: me.username }).catch(()=>{}); }, 1500); }
+
+  // show typing indicator
+  onValue(ref(db, 'typing'), (snap)=>{
+    const data = snap.val() || {};
+    const typingUsers = Object.keys(data).filter(k => data[k] && data[k].val && (!me || k !== me.uid));
+    if(typingUsers.length === 0) typingIndicator.textContent = '';
+    else if(typingUsers.length === 1) typingIndicator.textContent = `${data[typingUsers[0]].meta || 'Someone'} is typing...`;
+    else if(typingUsers.length === 2){ const a = data[typingUsers[0]].meta || 'Someone'; const b = data[typingUsers[1]].meta || 'Someone'; typingIndicator.textContent = `${a} & ${b} are typing...`; }
+    else typingIndicator.textContent = `People are typing...`;
+  });
+
+  // users list realtime listener
+  onValue(ref(db, 'users'), (snap)=>{ renderUsers(snap.val()||{}); });
+
+  // additionally poll every 5s to avoid stale states (requested)
+  setInterval(async ()=>{ try{ const snap = await get(ref(db, 'users')); renderUsers(snap.val()||{}); }catch(e){ console.warn('poll users failed', e); } }, 5000);
+
+  // show warnings as styled popup to user if set
+  onValue(ref(db,'users'), (snap)=>{ if(!me) return; const user = (snap.val()||{})[me.uid]; if(user && user.warning && user.warning.text){ showWarning(user.warning.text); } });
+
+  function showWarning(txt){ const ov = document.createElement('div'); ov.style.position='fixed'; ov.style.left='50%'; ov.style.top='12%'; ov.style.transform='translateX(-50%)'; ov.style.background='linear-gradient(90deg,#2b2,#ff4b5c)'; ov.style.padding='12px 18px'; ov.style.borderRadius='12px'; ov.style.boxShadow='0 8px 30px rgba(0,0,0,0.6)'; ov.style.zIndex=9999; ov.style.color='#04160f'; ov.style.fontWeight='800'; ov.textContent = 'Warning: ' + txt; document.body.appendChild(ov); setTimeout(()=>{ ov.remove(); }, 8000); }
+
+  // notify: Browser notification
+  async function notifyAll(text){ if(!("Notification" in window)) return; if(Notification.permission === "granted"){ new Notification('JarTalk', { body: text }); } else if(Notification.permission !== "denied"){ const p = await Notification.requestPermission(); if(p === "granted") new Notification('JarTalk', { body: text }); } }
+
+  // ===== UI interactions, registration/login etc. =====
+  openRegBtn.addEventListener('click', ()=>{ registerModal.style.display = 'flex'; authBlock.style.display = 'none'; infoBox.style.display = 'none'; inUsername.focus(); });
+  cancelReg.addEventListener('click', ()=>{ registerModal.style.display = 'none'; });
+  openInfo.addEventListener('click', ()=>{ infoBox.style.display = infoBox.style.display === 'none' ? 'block' : 'none'; });
+  openAuthBtn.addEventListener('click', ()=>{ authBlock.style.display = 'block'; });
+  authCode.addEventListener('input', ()=>{ if(authCode.value.trim() === AUTHORSHIP_CODE) authConfirm.style.display='block'; else authConfirm.style.display='none'; });
+  fakeFileBtn.addEventListener('click', ()=>{ inFile.click(); });
+  inFile.addEventListener('change', ()=>{ const f = inFile.files[0]; if(f) fakeFileBtn.textContent = `Selected: ${f.name}`; else fakeFileBtn.textContent = 'Choose file'; });
+  toggleShowPass.addEventListener('click', ()=>{ if(inPass.type === 'password'){ inPass.type = 'text'; toggleShowPass.textContent='Hide'; } else { inPass.type = 'password'; toggleShowPass.textContent='Show'; } });
+
+  // local created accounts tracking (simple alt limit)
+  function createdAccountsCount(){ return parseInt(localStorage.getItem('created_accounts')||'0',10); }
+  function incrCreatedAccounts(){ const c=createdAccountsCount()+1; localStorage.setItem('created_accounts', String(c)); }
+  function decrCreatedAccounts(){ const c=Math.max(0, createdAccountsCount()-1); localStorage.setItem('created_accounts', String(c)); }
+
+  previewBtn.addEventListener('click', async ()=>{
+    const username = inUsername.value.trim(); const age = parseInt(inAge.value); const desc = inDesc.value.trim(); const password = inPass.value;
+    if(!username || !password || !age){ alert('Fill username, age and password'); return; }
+    if(username.length < 3 || username.length > 15){ alert('Username must be 3–15 chars'); return; }
+    if(desc.length > 50){ alert('Description max 50 chars'); return; }
+    if(age < 14 || age > 45){ alert('Age 14–45'); return; }
+    if(createdAccountsCount() >= 2){ alert('You already created max number of profiles (2). Delete an existing profile to create a new one.'); return; }
+    if(await usernameExists_ci(username)){ alert('Username already exists (case-insensitive). Choose another.'); return; }
+    confirmPreview.innerHTML = `<strong>${esc(username)}</strong> — Age: <em>${age}</em><div style="margin-top:8px;color:var(--muted)">${esc(desc)}</div>`;
+    confirmModal.style.display = 'flex'; registerModal.style.display = 'none';
+  });
+
+  confirmNo.addEventListener('click', ()=>{ confirmModal.style.display = 'none'; registerModal.style.display = 'flex'; });
+
+  confirmYes.addEventListener('click', async ()=>{
+    confirmModal.style.display = 'none';
+    const username = inUsername.value.trim(); const age = parseInt(inAge.value); const desc = inDesc.value.trim(); const password = inPass.value; const file = inFile.files[0] || null; const ownerFlag = (authConfirm.style.display !== 'none');
+    try{
+      const uref = push(ref(db, 'users'));
+      const uid = uref.key;
+      const passHash = await hashPassword(password);
+      let photoURL = null;
+      if(file){ try{ photoURL = await uploadProfileImage(file, uid); } catch(e){ console.warn('upload failed', e); photoURL = null; } }
+      const userObj = { username, age, desc, photoURL: photoURL || null, passHash, online:true, lastSeen: Date.now(), owner: !!ownerFlag, banned:false, muted:false };
+      await set(uref, userObj);
+      const userRef = ref(db, `users/${uid}`);
+      onDisconnect(userRef).update({ online:false, lastSeen: Date.now() }).catch(()=>{});
+      localStorage.setItem('chat_uid', uid); localStorage.setItem('chat_username', username); incrCreatedAccounts();
+      inUsername.value=''; inAge.value=''; inDesc.value=''; inPass.value=''; inFile.value=''; fakeFileBtn.textContent='Choose file'; authConfirm.style.display='none'; authCode.value=''; authBlock.style.display='none'; infoBox.style.display='none';
+      me = { uid, username, age, desc, photoURL, owner: !!ownerFlag, banned:false, muted:false };
+      meRef = ref(db, `users/${uid}`);
+      setupAfterLogin();
+    }catch(err){ console.error('create user failed', err); alert('Failed to create profile'); }
+  });
+
+  // auto-login on load (single definition)
+  async function tryAutoLogin(){
+    try{
+      const savedUid = localStorage.getItem('chat_uid');
+      if(!savedUid){ registerModal.style.display = 'flex'; return; }
+      const snap = await get(ref(db, `users/${savedUid}`));
+      if(!snap.exists()){ localStorage.removeItem('chat_uid'); localStorage.removeItem('chat_username'); registerModal.style.display = 'flex'; return; }
+      const data = snap.val();
+      if(data.banned){ alert('This account was banned.'); localStorage.removeItem('chat_uid'); loginModal.style.display = 'flex'; return; }
+      me = { uid: savedUid, username: data.username, age: data.age, desc: data.desc, photoURL: data.photoURL||null, owner: data.owner||false, banned: data.banned||false, muted: data.muted||false };
+      meRef = ref(db, `users/${savedUid}`);
+      await update(meRef, { online:true }).catch(()=>{});
+      onDisconnect(meRef).update({ online:false, lastSeen: Date.now() }).catch(()=>{});
+      setupAfterLogin();
+    }catch(e){ console.warn('auto login failed', e); registerModal.style.display = 'flex'; }
+  }
+
+  function setupAfterLogin(){
+    currentUserSmall.textContent = me.username;
+    if(me.photoURL){ currentUserPhoto.style.display = 'inline-flex'; currentUserPhoto.querySelector('img').src = me.photoURL; } else currentUserPhoto.style.display='none';
+    logoutBtn.style.display = 'inline-block'; registerModal.style.display = 'none'; confirmModal.style.display = 'none'; loginModal.style.display = 'none'; addEditPhoto();
+    setInterval(()=>{ if(meRef) update(meRef, { lastSeen: Date.now() }).catch(()=>{}); }, 30_000);
+  }
+
+  // logout
+  logoutBtn.addEventListener('click', async ()=>{
+    if(!meRef) return;
+    await update(meRef, { online:false, lastSeen: Date.now() }).catch(()=>{});
+    await remove(ref(db, `typing/${me.uid}`)).catch(()=>{});
+    localStorage.removeItem('chat_uid'); localStorage.removeItem('chat_username'); me = null; meRef = null; logoutBtn.style.display='none'; currentUserPhoto.style.display='none'; currentUserSmall.textContent='Not logged'; loginModal.style.display='flex';
+  });
+
+  // login list
+  loginListBtn.addEventListener('click', async ()=>{ await populateLoginList(); loginModal.style.display = 'flex'; });
+  closeLogin.addEventListener('click', ()=>{ loginModal.style.display = 'none'; });
+
+  async function populateLoginList(){
+    loginProfiles.innerHTML = '';
+    const snap = await get(ref(db, 'users'));
+    const data = snap.val() || {};
+    const entries = Object.entries(data).map(([uid,u]) => ({uid, ...u}));
+    entries.sort((a,b)=>{ if((a.owner?1:0) !== (b.owner?1:0)) return (b.owner?1:0) - (a.owner?1:0); return (a.username||'').localeCompare(b.username||''); });
+    for(const u of entries){
+      const row = document.createElement('div'); row.style.display='flex'; row.style.alignItems='center'; row.style.justifyContent='space-between'; row.style.gap='8px'; row.style.padding='6px'; row.style.borderRadius='8px'; row.style.background='linear-gradient(90deg, rgba(255,255,255,0.01), transparent)';
+      const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+      const av = document.createElement('div'); av.style.width='44px'; av.style.height='44px'; av.style.borderRadius='8px'; av.style.overflow='hidden';
+      if(u.photoURL){ const i = document.createElement('img'); i.src=u.photoURL; i.style.width='100%'; i.style.height='100%'; i.style.objectFit='cover'; av.appendChild(i); } else av.textContent = (u.username||'U').slice(0,2).toUpperCase();
+      const meta = document.createElement('div');
+      const nameLine = document.createElement('div'); nameLine.style.fontWeight='700'; if(u.owner) nameLine.innerHTML = `<span style="color:var(--owner-red)">${esc(u.username||'User')}</span> <span class="owner-tag">Owner</span>`; else nameLine.textContent = u.username || 'User';
+      const desc = document.createElement('div'); desc.className='tiny'; desc.textContent = u.desc || '';
+      meta.appendChild(nameLine); meta.appendChild(desc); left.appendChild(av); left.appendChild(meta);
+
+      const right = document.createElement('div');
+      const passInput = document.createElement('input'); passInput.type='password'; passInput.placeholder='Password'; passInput.style.padding='6px'; passInput.style.borderRadius='8px'; passInput.style.border='none'; passInput.style.background='rgba(255,255,255,0.02)';
+      const showBtn = document.createElement('button'); showBtn.className='file-btn'; showBtn.textContent='Show'; showBtn.addEventListener('click', ()=>{ passInput.type = passInput.type === 'password'? 'text' : 'password'; });
+      const btn = document.createElement('button'); btn.className='btn'; btn.textContent='Login';
+      btn.addEventListener('click', async ()=>{
+        const pw = passInput.value||''; if(!pw){ alert('Enter password'); return; }
+        const pwHash = await hashPassword(pw);
+        const snapu = await get(ref(db, `users/${u.uid}`)); if(!snapu.exists()){ alert('Profile not found'); return; }
+        const ud = snapu.val(); if(ud.passHash === pwHash){ if(ud.banned){ alert('This profile is banned.'); return; } me = { uid: u.uid, username: ud.username, age: ud.age, desc: ud.desc, photoURL: ud.photoURL||null, owner: ud.owner||false, banned: ud.banned||false, muted: ud.muted||false }; meRef = ref(db, `users/${u.uid}`); await update(meRef, { online:true }).catch(()=>{}); onDisconnect(meRef).update({ online:false, lastSeen: Date.now() }).catch(()=>{}); localStorage.setItem('chat_uid', u.uid); localStorage.setItem('chat_username', u.username); loginModal.style.display = 'none'; setupAfterLogin(); } else alert('Wrong password');
+      });
+      right.appendChild(passInput); right.appendChild(showBtn); right.appendChild(btn); row.appendChild(left); row.appendChild(right); loginProfiles.appendChild(row);
+    }
+  }
+
+  // edit profile photo
+  function addEditPhoto(){ if(document.getElementById('editPhotoBtn')) return; const btn = document.createElement('button'); btn.id='editPhotoBtn'; btn.className='file-btn'; btn.textContent='✎'; btn.style.marginLeft='6px'; btn.addEventListener('click', ()=>{ const input = document.createElement('input'); input.type='file'; input.accept='image/*'; input.addEventListener('change', async ()=>{ const f = input.files[0]; if(!f) return; const url = await uploadProfileImage(f, me.uid); if(url){ await update(ref(db, `users/${me.uid}`), { photoURL: url }).catch(()=>{}); me.photoURL = url; currentUserPhoto.style.display='inline-flex'; currentUserPhoto.querySelector('img').src = url; } }); input.click(); }); currentUserSmall.parentElement.appendChild(btn); }
+
+  // delete my profile
+  deleteMyProfileBtn.addEventListener('click', async ()=>{ if(!me) return alert('Log in first'); if(!confirm('Delete your profile? This will remove it permanently.')) return; await remove(ref(db, `users/${me.uid}`)).catch(()=>{}); decrCreatedAccounts(); localStorage.removeItem('chat_uid'); localStorage.removeItem('chat_username'); me = null; meRef = null; currentUserSmall.textContent = 'Not logged'; currentUserPhoto.style.display='none'; logoutBtn.style.display='none'; registerModal.style.display = 'flex'; });
+
+  // clear chat (owner only) — dark buttons fixed by keeping .file-btn styling consistent
+  clearAllBtn.addEventListener('click', async ()=>{ if(!me || !me.owner) return alert('Owner only'); if(!confirm('Clear all chat messages?')) return; await remove(ref(db, 'messages')).catch(()=>{}); const sys = push(ref(db,'messages')); await set(sys, { uid:'system', username:'System', text:'Chat was cleared by Authority', ts: Date.now(), photoURL:null, owner:false }); });
+
+  // DM functionality
+  const openDMs = {}; function roomIdFor(a,b){ return a < b ? `${a}_${b}` : `${b}_${a}`; }
+  function openDM(targetUid){ if(!me){ alert('Log in first'); return; } if(targetUid === me.uid){ alert('Cannot DM yourself'); return; } const rid = roomIdFor(me.uid, targetUid); if(openDMs[rid]) return; (async ()=>{ const snap = await get(ref(db, `users/${targetUid}`)); if(!snap.exists()) return alert('User not found'); const u = snap.val(); const template = dmTemplate.firstElementChild.cloneNode(true); template.dataset.room = rid; template.querySelector('.dm-name').textContent = u.username + (u.owner? ' (Owner)':''); const avatarImg = template.querySelector('.msg-avatar img'); if(avatarImg && u.photoURL) avatarImg.src = u.photoURL; const dmMessages = template.querySelector('.dm-messages'); const dmInput = template.querySelector('.dm-input-field'); const dmSend = template.querySelector('.dm-send'); const dmClose = template.querySelector('.dm-close'); document.body.appendChild(template); openDMs[rid] = template; onChildAdded(ref(db, `dms/${rid}`), (s)=>{ const m = s.val(); const el = document.createElement('div'); el.style.marginBottom='6px'; el.innerHTML = `<strong>${esc(m.username)}</strong>: ${esc(m.text)} <span class="tiny muted">(${new Date(m.ts||Date.now()).toLocaleTimeString()})</span>`; dmMessages.appendChild(el); dmMessages.scrollTop = dmMessages.scrollHeight; }); dmSend.addEventListener('click', async ()=>{ const txt = dmInput.value.trim(); if(!txt) return; const r = push(ref(db, `dms/${rid}`)); await set(r, { uid: me.uid, username: me.username, text: txt, ts: Date.now() }); dmInput.value = ''; }); dmClose.addEventListener('click', ()=>{ template.remove(); delete openDMs[rid]; }); })(); }
+
+  // initial load
+  window.addEventListener('load', ()=>{ tryAutoLogin(); });
+
+  // helper: listen to users realtime for warnings handled above
+
+
+
+let mutedUsers = [];
+function muteUser(name) {
+  if (!mutedUsers.includes(name)) {
+    mutedUsers.push(name);
+  }
+}
+function isMuted(name) {
+  return mutedUsers.includes(name);
+}
+</script>
+
+<input type="file" id="imageUpload" accept="image/*" style="display:none" onchange="sendImage(event)">
+<script>
+function triggerImageUpload() {
+  document.getElementById('imageUpload').click();
+}
+function sendImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const imgHTML = '<div class="message own"><img src="' + e.target.result + '" style="max-width:200px;border-radius:8px;"></div>';
+    document.querySelector('.messages').innerHTML += imgHTML;
+  };
+  reader.readAsDataURL(file);
+}
+
+let mutedUsers = [];
+function muteUser(name) {
+  if (!mutedUsers.includes(name)) {
+    mutedUsers.push(name);
+  }
+}
+function isMuted(name) {
+  return mutedUsers.includes(name);
+}
+</script>
+</div></body>
+</html>
